@@ -16,6 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.9.2</junit.version>
         <selenium.version>4.15.0</selenium.version>
+        <webdrivermanager.version>5.9.0</webdrivermanager.version> <!-- Обновленная версия -->
     </properties>
 
     <dependencies>
@@ -24,6 +25,13 @@
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <version>${selenium.version}</version>
+        </dependency>
+
+        <!-- WebDriver Manager -->
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <version>${webdrivermanager.version}</version> <!-- Используем свойство -->
         </dependency>
 
         <!-- JUnit 5 -->
