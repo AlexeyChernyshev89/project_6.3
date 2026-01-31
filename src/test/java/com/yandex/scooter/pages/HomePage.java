@@ -1,9 +1,10 @@
 package com.yandex.scooter.pages;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -11,144 +12,125 @@ import java.time.Duration;
 import java.util.List;
 
 public class HomePage {
-    private final WebDriver driver;
-    private final WebDriverWait wait;
+    private WebDriver driver;
 
-    // Локаторы для аккордеона
-    private final By faqSection = By.xpath("//div[text()='Вопросы о важном']");
-    private final By accordionItems = By.cssSelector("[data-accordion-component='AccordionItem']");
-    private final By questionButtons = By.cssSelector("[data-accordion-component='AccordionItemButton']");
-    private final By answerPanels = By.cssSelector("[data-accordion-component='AccordionItemPanel']");
+    // Заголовок страницы
+    @FindBy(className = "Home_Header__iJKdX")
+    private WebElement pageTitle;
 
-    // Кнопки заказа
-    private final By headerOrderButton = By.xpath("//button[text()='Заказать' and parent::div[@class='Header_Nav__AGCXC']]");
-    private final By bottomOrderButton = By.xpath("//button[text()='Заказать' and parent::div[@class='Home_FinishButton__1_cWm']]");
+    // Верхняя кнопка "Заказать"
+    @FindBy(xpath = "//div[@class='Header_Nav__AGCXC']/button[text()='Заказать']")
+    private WebElement headerOrderButton;
+
+    // Нижняя кнопка "Заказать"
+    @FindBy(xpath = "//div[@class='Home_FinishButton__1_cWm']/button")
+    private WebElement bottomOrderButton;
+
+    // Секция FAQ
+    @FindBy(className = "Home_FAQ__3uVm4")
+    private WebElement faqSection;
+
+    // Все вопросы FAQ
+    @FindBy(css = "[data-accordion-component='AccordionItemButton']")
+    private List<WebElement> faqQuestions;
+
+    // Все ответы FAQ
+    @FindBy(css = "[data-accordion-component='AccordionItemPanel']")
+    private List<WebElement> faqAnswers;
+
+    // Баннер с куками
+    @FindBy(className = "App_CookieConsent__1yUIN")
+    private WebElement cookieBanner;
+
+    // Кнопка закрытия баннера куки
+    @FindBy(xpath = "//button[contains(text(), 'да все привыкли')]")
+    private WebElement cookieAcceptButton;
 
     public HomePage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        PageFactory.initElements(driver, this);
     }
 
-    // Метод для прокрутки к разделу FAQ
-    public void scrollToFaq() {
-        WebElement faqElement = driver.findElement(faqSection);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView();", faqElement);
+    public void waitForPageLoad() {
+        new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.visibilityOf(pageTitle));
+    }
+
+    public void closeCookieBannerIfPresent() {
         try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    // Получение количества вопросов
-    public int getQuestionsCount() {
-        return driver.findElements(questionButtons).size();
-    }
-
-    // Получение текста вопроса по индексу
-    public String getQuestionText(int index) {
-        List<WebElement> questions = driver.findElements(questionButtons);
-        if (index < questions.size()) {
-            return questions.get(index).getText();
-        }
-        return "";
-    }
-
-    // Клик по вопросу по индексу
-    public void clickQuestion(int index) {
-        List<WebElement> questions = driver.findElements(questionButtons);
-        if (index < questions.size()) {
-            WebElement question = questions.get(index);
-
-            // Прокручиваем к элементу
-            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView();", question);
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            if (wait.until(ExpectedConditions.visibilityOf(cookieBanner)).isDisplayed()) {
+                cookieAcceptButton.click();
+                System.out.println("Баннер с куками закрыт");
             }
-
-            // Кликаем
-            question.click();
-
-            // Ждем анимации
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    // Получение текста ответа по индексу
-    public String getAnswerText(int index) {
-        List<WebElement> answers = driver.findElements(answerPanels);
-        if (index < answers.size()) {
-            WebElement answer = answers.get(index);
-            wait.until(ExpectedConditions.visibilityOf(answer));
-            return answer.getText();
-        }
-        return "";
-    }
-
-    // Проверка, что ответ отображается
-    public boolean isAnswerDisplayed(int index) {
-        try {
-            List<WebElement> answers = driver.findElements(answerPanels);
-            if (index < answers.size()) {
-                WebElement answer = answers.get(index);
-                return answer.isDisplayed();
-            }
-            return false;
         } catch (Exception e) {
-            return false;
+            // Баннер не найден, это нормально
         }
     }
 
-    // Проверка атрибута aria-expanded
-    public boolean isQuestionExpanded(int index) {
-        List<WebElement> questions = driver.findElements(questionButtons);
-        if (index < questions.size()) {
-            WebElement question = questions.get(index);
-            String ariaExpanded = question.getAttribute("aria-expanded");
-            return "true".equals(ariaExpanded);
+    public void clickHeaderOrderButton() {
+        headerOrderButton.click();
+    }
+
+    public void clickBottomOrderButton() {
+        ((org.openqa.selenium.JavascriptExecutor) driver)
+                .executeScript("arguments[0].scrollIntoView(true);", bottomOrderButton);
+        new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.elementToBeClickable(bottomOrderButton));
+        bottomOrderButton.click();
+    }
+
+    // Методы для работы с FAQ
+
+    public void scrollToFaqSection() {
+        ((org.openqa.selenium.JavascriptExecutor) driver)
+                .executeScript("arguments[0].scrollIntoView(true);", faqSection);
+    }
+
+    public void clickFaqQuestion(int index) {
+        if (index >= 0 && index < faqQuestions.size()) {
+            WebElement question = faqQuestions.get(index);
+            ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("arguments[0].scrollIntoView(true);", question);
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(question));
+            question.click();
+        }
+    }
+
+    public String getFaqQuestionText(int index) {
+        if (index >= 0 && index < faqQuestions.size()) {
+            return faqQuestions.get(index).getText();
+        }
+        return "";
+    }
+
+    public String getFaqAnswerText(int index) {
+        if (index >= 0 && index < faqAnswers.size()) {
+            try {
+                // Ждем, пока ответ станет видимым
+                new WebDriverWait(driver, Duration.ofSeconds(5))
+                        .until(ExpectedConditions.visibilityOf(faqAnswers.get(index)));
+                return faqAnswers.get(index).getText();
+            } catch (Exception e) {
+                return "";
+            }
+        }
+        return "";
+    }
+
+    public boolean isFaqAnswerDisplayed(int index) {
+        if (index >= 0 && index < faqAnswers.size()) {
+            try {
+                return faqAnswers.get(index).isDisplayed();
+            } catch (Exception e) {
+                return false;
+            }
         }
         return false;
     }
 
-    // Клик по кнопке заказа в хедере
-    public void clickHeaderOrderButton() {
-        driver.findElement(headerOrderButton).click();
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    // Клик по нижней кнопке заказа
-    public void clickBottomOrderButton() {
-        WebElement button = driver.findElement(bottomOrderButton);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView();", button);
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        button.click();
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    // Ожидания
-    public void waitForPageLoad() {
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    public int getFaqQuestionsCount() {
+        return faqQuestions.size();
     }
 }
